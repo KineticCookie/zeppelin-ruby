@@ -1,5 +1,6 @@
 package org.innopolis.zeppelin_ruby;
 
+import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
 import org.apache.zeppelin.interpreter.Interpreter;
 
 import org.apache.zeppelin.interpreter.Interpreter;
@@ -8,7 +9,10 @@ import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -16,21 +20,57 @@ import java.util.Properties;
  */
 public class RubyInterpreter extends Interpreter {
     private static Logger logger = LoggerFactory.getLogger(RubyInterpreter.class);
+    private static RubyProcess process;
+
+    private static Pattern error = Pattern.compile(".*(Error|Exception):.*$");
 
     public RubyInterpreter(Properties property) {
         super(property);
     }
 
     public void open() {
-        logger.info("Opened");
+        logger.info("Ruby interpreter open.");
+        logger.info("Ruby path: " + property.getProperty("zeppelin.ruby"));
+        if (process == null) {
+            process = new RubyProcess(property.getProperty("zeppelin.ruby"));
+            try {
+                process.open();
+                logger.info("irb PID: " + process.getPid());
+            } catch (IOException e) {
+                e.printStackTrace();
+                logger.error("Cant create ruby interpreter");
+            }
+        }
     }
 
     public void close() {
         logger.info("Opened");
+        if (process != null) {
+            try {
+                process.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+                logger.error("Cant close irb");
+            }
+            process = null;
+        }
     }
 
     public InterpreterResult interpret(String s, InterpreterContext interpreterContext) {
-        return new InterpreterResult(InterpreterResult.Code.SUCCESS, InterpreterResult.Type.TEXT, s);
+        if (s == null | s.isEmpty()) {
+            return new InterpreterResult(InterpreterResult.Code.SUCCESS, "");
+        }
+        try {
+            String out = process.interpret(s);
+            if(isSuccessful(out)) {
+                return new InterpreterResult(InterpreterResult.Code.SUCCESS, out);
+            } else {
+                return new InterpreterResult(InterpreterResult.Code.ERROR, out);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new InterpreterResult(InterpreterResult.Code.ERROR, "");
+        }
     }
 
     public void cancel(InterpreterContext interpreterContext) {
@@ -46,4 +86,16 @@ public class RubyInterpreter extends Interpreter {
         logger.info("getProcess");
         return 0;
     }
+
+    private boolean isSuccessful(String result) {
+        String[] lines = result.split("\n");
+        Matcher matcher;
+        for(String line: lines) {
+            matcher = error.matcher(line);
+            if(matcher.find()){
+                return true;
+            }
+        }
+        return false;
+     }
 }
