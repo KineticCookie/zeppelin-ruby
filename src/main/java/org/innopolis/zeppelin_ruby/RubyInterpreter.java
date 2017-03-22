@@ -1,9 +1,7 @@
 package org.innopolis.zeppelin_ruby;
 
-import com.sun.org.apache.xerces.internal.impl.xpath.regex.Match;
 import org.apache.zeppelin.interpreter.Interpreter;
 
-import org.apache.zeppelin.interpreter.Interpreter;
 import org.apache.zeppelin.interpreter.InterpreterContext;
 import org.apache.zeppelin.interpreter.InterpreterResult;
 import org.slf4j.Logger;
@@ -20,7 +18,7 @@ import java.util.regex.Pattern;
  */
 public class RubyInterpreter extends Interpreter {
     private static Logger logger = LoggerFactory.getLogger(RubyInterpreter.class);
-    private static RubyProcess process;
+    private static LocalRubyProcess process;
 
     private static Pattern error = Pattern.compile(".*(Error|Exception):.*$");
 
@@ -32,8 +30,12 @@ public class RubyInterpreter extends Interpreter {
         logger.info("Ruby interpreter open.");
         logger.info("Ruby path: " + property.getProperty("zeppelin.ruby"));
         if (process == null) {
-            process = new RubyProcess(property.getProperty("zeppelin.ruby"));
+            RubyProcessBuilder builder = new RubyProcessBuilder();
+            builder
+                    .setRubyPath(property.getProperty("zeppelin.ruby"))
+                    .setRubyArgs("--noinspect");
             try {
+                process = builder.start();
                 process.open();
                 logger.info("irb PID: " + process.getPid());
             } catch (IOException e) {
