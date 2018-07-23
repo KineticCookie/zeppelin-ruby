@@ -85,7 +85,7 @@ public class RubyInterpreter extends Interpreter {
     }
 
     public int getProgress(InterpreterContext interpreterContext) {
-        logger.info("getProcess");
+        logger.info("getProgress");
         return 0;
     }
 
@@ -94,10 +94,10 @@ public class RubyInterpreter extends Interpreter {
         Matcher matcher;
         for(String line: lines) {
             matcher = error.matcher(line);
-            if(matcher.find()){
-                return true;
+            if(matcher.find()) {
+                return false;
             }
         }
-        return false;
+        return true;
      }
 }
