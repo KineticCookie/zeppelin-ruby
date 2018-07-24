@@ -59,7 +59,8 @@ public class LocalRubyProcess {
         StringBuilder out = new StringBuilder();
         String line = null;
         boolean isFlush = false;
-        while((line = reader.readLine()) != null && !isFlush) {
+        while ( !isFlush && ((line = reader.readLine()) != null ) ) // changed order of conditions to avoid endless loop
+        {
             if (line.contains(STATEMENT_END)) {
                 isFlush = true;
             } else {
