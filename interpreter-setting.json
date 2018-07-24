@@ -1,0 +1,12 @@
+[
+  {
+    "group": "ruby",
+    "name": "ruby",
+    "className": "org.innopolis.zeppelin_ruby.RubyInterpreter",
+    "properties": {
+    },
+    "editor": {
+      "editOnDblClick": true
+    }
+  }
+]
