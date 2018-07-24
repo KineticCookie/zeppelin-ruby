@@ -32,8 +32,7 @@ public class RubyInterpreter extends Interpreter {
         if (process == null) {
             RubyProcessBuilder builder = new RubyProcessBuilder();
             builder
-                    .setRubyPath(property.getProperty("zeppelin.ruby"))
-                    .setRubyArgs("--noinspect");
+                    .setRubyPath(property.getProperty("zeppelin.ruby"));  // .setRubyArgs("--noinspect") doesn't work, add it directly on command line (zeppelin.ruby)
             try {
                 process = builder.start();
                 process.open();
@@ -63,7 +62,28 @@ public class RubyInterpreter extends Interpreter {
             return new InterpreterResult(InterpreterResult.Code.SUCCESS, "");
         }
         try {
+            logger.info("--- interperet - in: <<<\n" + s);
+            
             String out = process.interpret(s);
+            
+            if (property.getProperty("zeppelin.ruby.noecho").equals("true"))
+            {
+                // remove s from out
+                logger.info("+++ interperet - out: \n" + out);
+                logger.info("'zeppelin.ruby.noecho' = true --> remove input ...");
+
+                String lines[] = s.split("\\r?\\n");
+                
+                for (int i = 0; i < lines.length; ++i)
+                {
+                    logger.info ("***" + lines[i] + "***");
+                    out = out.replaceFirst(Pattern.quote(lines[i]), "");
+                }
+
+            }
+
+            logger.info("+++ interperet - out: >>>\n" + out);   // rps
+            
             if(isSuccessful(out)) {
                 return new InterpreterResult(InterpreterResult.Code.SUCCESS, out);
             } else {
