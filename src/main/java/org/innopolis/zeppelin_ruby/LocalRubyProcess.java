@@ -58,12 +58,25 @@ public class LocalRubyProcess {
         writer.flush();
         StringBuilder out = new StringBuilder();
         String line = null;
+        boolean start = true;
         boolean isFlush = false;
-        while((line = reader.readLine()) != null && !isFlush) {
-            if (line.contains(STATEMENT_END)) {
+        while ( !isFlush && ((line = reader.readLine()) != null ) ) // changed order of conditions to avoid endless loop
+        {
+            if (start && line.contains(STATEMENT_END))
+            {
+                logger.info("IRB: STATEMENT END at beginning --- IGNORE IT --- line:'" + line + "'.");
+                continue;
+            }
+
+            start = false;
+            if (line.contains(STATEMENT_END)) 
+            {
+                logger.info("IRB: end of input"); // rps
                 isFlush = true;
-            } else {
-                logger.info("Result from IRB: " + line);
+                break;
+            } else 
+            {
+                logger.info("result from IRB: " + line);
                 out.append(line + "\n");
             }
         }
